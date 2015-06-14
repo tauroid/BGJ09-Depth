@@ -1,12 +1,15 @@
+import 'dart:html';
 import 'dart:math';
 
 import 'package:vector_math/vector_math.dart';
 
+import 'mob.dart';
+
 class Camera {
     CanvasElement canvas;
     Vector2 position = new Vector2.zero();
-    double rotation = 0;
-    double zoom = 1;
+    double rotation = 0.0;
+    double zoom = 1.0;
     double trackwidth, trackheight;
     Vector2 range = new Vector2.zero();
 

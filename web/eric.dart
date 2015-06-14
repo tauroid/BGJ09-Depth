@@ -10,13 +10,19 @@ import 'events.dart';
 import 'mob.dart';
 import 'scenery.dart';
 
+import 'mobs/gloopoids.dart';
+import 'scenery/movingplatform.dart';
+
 class Eric extends Mob with Subscriber {
     static const int DISENGAGE_TIME = 100;
     static const int ANIMATION_SCALING = 4;
+    static const int DEATH_DELAY = 3000;
+    static const int DEATH_DISTANCE = 240;
 
-    Map<String,Animation> animations = new Map();
+    Map<String,Anim> animations = new Map();
 
     int lastcontact = new DateTime.now().millisecondsSinceEpoch;
+    Vector3 lastcontactlocation;
     
     bool goingleft = false;
     bool leftpressed = false;
@@ -27,6 +33,7 @@ class Eric extends Mob with Subscriber {
     int powerlevel = 0;
     double walkaccel = 400.0;
     double maxwalk = 150.0;
+    double driftaccel = 100.0;
 
     int idlestart = 0;
     double idlespeed = 0.0;
@@ -42,10 +49,9 @@ class Eric extends Mob with Subscriber {
         filters.add('collision');
 
         Assets.buildAnimation("/assets/huemanatee/animations/eric/manatee_death_fall.png", 24, 24)
-            .then((anim) {
-                anim.repeat = false;
-                animations['death_fall'] = anim;
-            });
+            .then((anim) => animations['death_fall'] = anim);
+        Assets.buildAnimation("/assets/huemanatee/animations/eric/manatee_death_sideways.png", 24, 24)
+            .then((anim) => animations['death_sideways'] = anim);
         Assets.buildAnimation("/assets/huemanatee/animations/eric/manatee_idle.png",24,24)
             .then((anim) {
                 anim.framedelayms = 500;
@@ -62,8 +68,8 @@ class Eric extends Mob with Subscriber {
         Assets.buildAnimation("/assets/huemanatee/animations/eric/manatee_falling.png",24,24)
             .then((anim) => animations['falling'] = anim);
 
-        collisionShape = new Circle(10*ANIMATION_SCALING);
-        anchor = (new Vector2(12.0,14.0))*ANIMATION_SCALING;
+        collisionShape = new Circle(10.0*ANIMATION_SCALING,4.0*ANIMATION_SCALING);
+        anchor = (new Vector2(12.0,20.0))*ANIMATION_SCALING.toDouble();
     }
 
     void onEvent(GameEvent event) {
@@ -79,7 +85,25 @@ class Eric extends Mob with Subscriber {
                 } else {
                     contacthorizontal = false;
                 }
-            }
+
+                if (contactscenery.kills) {
+                    if (contacthorizontal) {
+                        kill(animations['death_fall']);
+                    } else {
+                        kill(animations['death_sideways']);
+                    }
+                } else if (contacthorizontal && lastcontactlocation != null &&
+                        position.y - lastcontactlocation.y > DEATH_DISTANCE) {
+                    kill(animations['death_fall']);
+                }
+                    
+                lastcontactlocation = position;
+            } else if (event.data.collidee != null && event.data.collidee is Gloopoid) {
+                print('found gloop');
+                event.data.collidee.explode();
+                gainPower(event.data.collidee.powerlevel);
+            }            
+
         }
 
         if (event.type == 'keydown') {
@@ -101,12 +125,29 @@ class Eric extends Mob with Subscriber {
         }
     }
 
+    void gainPower(int powerlevel) {
+    }
+
+    void kill(Anim anim) {
+        state = EricState.DEAD;
+        animation = anim;
+        animation.flipped = goingleft;
+        animation.play(false);
+        EventBus.broadcastEvent(new GameEvent('dead',this));
+        active = false;
+    }
+
+    void resurrect() {
+        state = EricState.IDLE;
+        active = true;
+    }
+
     void update(num delta) {
         int time = new DateTime.now().millisecondsSinceEpoch;
 
         if (time - lastcontact > DISENGAGE_TIME) contactscenery = null;
 
-        if (contactscenery == null && state != EricState.AIRSCOOTING) {
+        if (state != EricState.DEAD && contactscenery == null && state != EricState.AIRSCOOTING) {
             state = EricState.FALLING;
         }
 
@@ -119,13 +160,21 @@ class Eric extends Mob with Subscriber {
                     if (animation != null) animation.flipped = goingleft;
                 }
 
-                if (contactscenery != null &&
-                        contactscenery.slowdowntime > (time-idlestart)) {
-                    velocity.x = (velocity.x > 0 ? 1 : -1)*idlespeed
-                        *(contactscenery.slowdowntime-time+idlestart)
-                        /contactscenery.slowdowntime;
-                } else if (time-idlestart > contactscenery.slowdowntime) {
-                    velocity.x = 0.0;
+                if (contactscenery != null) {
+                    double x_rel = 0.0;
+                    if (contactscenery is MovingPlatform) {
+                        MovingPlatform platform = contactscenery as MovingPlatform;
+                        x_rel = platform.velocity.x;
+                    }
+                    if (contactscenery.slowdowntime > (time-idlestart)) {
+                        velocity.x -= x_rel;
+                        velocity.x = (velocity.x > 0 ? 1 : -1)*idlespeed
+                            *(contactscenery.slowdowntime-time+idlestart)
+                            /contactscenery.slowdowntime;
+                        velocity.x += x_rel;
+                    } else if (time-idlestart > contactscenery.slowdowntime) {
+                        velocity.x = x_rel;
+                    }
                 }
 
                 if (inputchanged) {
@@ -163,6 +212,12 @@ class Eric extends Mob with Subscriber {
                     if (animation != null) animation.flipped = goingleft;
                 }
 
+                if (leftpressed != rightpressed) {
+                    decideDirection();
+                    velocity.x += (goingleft ? -1 : 1)*driftaccel*delta/1000.0;
+                    if (velocity.x.abs() > maxwalk) velocity.x = (goingleft ? -1 : 1)*maxwalk;
+                }
+
                 if (contactscenery != null) {
                     if (contacthorizontal) {
                         decideLandState();
@@ -173,6 +228,8 @@ class Eric extends Mob with Subscriber {
             case EricState.WALLGRAB:
                 if (animation != animations['wallgrab']) animation = animations['wallgrab'];
 
+                break;
+            case EricState.DEAD:
                 break;
         }
     }
@@ -205,8 +262,9 @@ class EricState {
     static const WALLGRAB = const EricState._(4);
     static const WALLSLIDING = const EricState._(5);
     static const PHASING = const EricState._(6);
+    static const DEAD = const EricState._(7);
 
-    static get values => [IDLE,WALKING,FALLING,AIRSCOOTING,WALLGRAB,WALLSLIDING,PHASING];
+    static get values => [IDLE,WALKING,FALLING,AIRSCOOTING,WALLGRAB,WALLSLIDING,PHASING,DEAD];
 
     final int value;
 

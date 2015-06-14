@@ -6,11 +6,18 @@
 </title>
 </head>
 <body>
-<!--<script type="text/javascript" src="/scripts/huemanatee/main.js"></script>-->
-<script type="application/dart" src="main.dart"></script>
-<audio id="yess" src="/assets/huemanatee/Depth_Theme_test1.mp3"></audio>
-<script type="text/javascript">document.getElementById("yess").play();</script>
+<!--<script type="application/dart" src="main.dart"></script>-->
 <canvas id="delve" width="800" height="600" style="border: 1px solid #000000"></canvas><br>
+<audio id='song' src='/assets/huemanatee/audio/TheDepthOfColour.mp3'></audio>
+<script>document.getElementById('song').play()</script>
 <img src="http://i.imgur.com/jALYM.gif"></img>
+<script type="text/javascript">
+canvas = document.getElementById('delve').getContext('2D');
+canvas.mozImageSmoothingEnabled = false;
+canvas.webkitImageSmoothingEnabled = false;
+canvas.msImageSmoothingEnabled = false;
+canvas.imageSmoothingEnabled = false;
+</script>
+<script type="text/javascript" src="/scripts/huemanatee/main.js"></script>
 </body>
 </html>

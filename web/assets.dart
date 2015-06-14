@@ -1,22 +1,23 @@
+import 'dart:async';
 import 'dart:html';
 
 import 'animation.dart';
 
 class Assets {
-    static Map<String,Animation> animations = new Map();
+    static Map<String,Anim> animations = new Map();
     static Map<String,AudioElement> audio = new Map();
     static Map<String,ImageElement> images = new Map();
 
-    static Animation buildAnimation(String path, int width, int height, [int maxframes]) {
+    static Future<Anim> buildAnimation(String path, int width, int height, [int maxframes]) {
         ImageElement spritesheet = getImage(path);
         images[path] = spritesheet;
 
         return spritesheet.onLoad.first.then((e) {
-            Animation animation;
+            Anim animation;
             if (maxframes != null) {
-                animation = new Animation(spritesheet, width, height, maxframes);
+                animation = new Anim(spritesheet, width, height, maxframes);
             } else {
-                animation = new Animation(spritesheet, width, height);
+                animation = new Anim(spritesheet, width, height);
             }
             animations[path] = animation;
             return animation;

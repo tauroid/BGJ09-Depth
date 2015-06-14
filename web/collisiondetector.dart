@@ -52,8 +52,8 @@ class CollisionDetector {
                 _level.mobs.forEach((Mob othermob) {
                     if (othermob.collisionShape == null || mob == othermob) return;
                     
-                    if (othermob.collisionShape is Circle) {
-                        Vector3 distanceAlongNormal = collideCircleAndCircle(
+                    if (othermob.collisionShape is Box) {
+                        Vector3 distanceAlongNormal = collideCircleAndBox(
                             mob.position, mob.collisionShape,
                             othermob.position, othermob.collisionShape);
                         if (distanceAlongNormal != null) {
@@ -65,6 +65,16 @@ class CollisionDetector {
                         }
                     }
                 });
+
+                _level.warps.forEach((Warpzone warp) {
+                    Vector3 distanceAlongNormal = collideCircleAndBox(
+                        mob.position, mob.collisionShape,
+                        warp.position, warp);
+                    
+                    if (distanceAlongNormal != null) {
+                        EventBus.broadcastEvent(new GameEvent('warp',warp.construct));
+                    }
+                });
             }
         });
     }
@@ -74,36 +84,36 @@ class CollisionDetector {
                                 Vector3 boxpos,
                                 Box box) {
 
-        bool horizontalintersection = circlepos.x+circle.radius > boxpos.x &&
-                circlepos.x-circle.radius < boxpos.x+box.width;
-        bool verticalintersection = circlepos.y+circle.radius > boxpos.y &&
-                circlepos.y-circle.radius < boxpos.y+box.height;
+        bool horizontalintersection = circlepos.x+circle.hradius > boxpos.x &&
+                circlepos.x-circle.hradius < boxpos.x+box.width;
+        bool verticalintersection = circlepos.y+circle.vradius > boxpos.y &&
+                circlepos.y-circle.vradius < boxpos.y+box.height;
         if (horizontalintersection && verticalintersection) {
-            if (min(circlepos.x+circle.radius - boxpos.x,
-                    boxpos.x+box.width - (circlepos.x-circle.radius)) >
-                min(circlepos.y+circle.radius - boxpos.y,
-                    boxpos.y+box.height- (circlepos.y-circle.radius))) {
+            if (min(circlepos.x+circle.hradius - boxpos.x,
+                    boxpos.x+box.width - (circlepos.x-circle.hradius)) >
+                min(circlepos.y+circle.vradius - boxpos.y,
+                    boxpos.y+box.height- (circlepos.y-circle.vradius))) {
                 verticalintersection = false;
             } else {
                 horizontalintersection = false;
             }
         }
         if (horizontalintersection) {
-            if (circlepos.y-circle.radius < boxpos.y+box.height &&
+            if (circlepos.y-circle.vradius < boxpos.y+box.height &&
                     circlepos.y > boxpos.y+box.height/2.0) {
-                return new Vector3(0.0,boxpos.y+box.height-circlepos.y+circle.radius,0.0);
-            } else if (circlepos.y+circle.radius > boxpos.y &&
+                return new Vector3(0.0,boxpos.y+box.height-circlepos.y+circle.vradius,0.0);
+            } else if (circlepos.y+circle.vradius > boxpos.y &&
                     circlepos.y < boxpos.y+box.height/2.0) {
-                return new Vector3(0.0,boxpos.y-circlepos.y-circle.radius,0.0);
+                return new Vector3(0.0,boxpos.y-circlepos.y-circle.vradius,0.0);
             }
         }
         if (verticalintersection) {
-            if (circlepos.x-circle.radius < boxpos.x+box.width &&
+            if (circlepos.x-circle.hradius < boxpos.x+box.width &&
                     circlepos.x > boxpos.x+box.width/2.0) {
-                return new Vector3(boxpos.x+box.width-circlepos.x+circle.radius,0.0,0.0);
-            } else if (circlepos.x+circle.radius > boxpos.x &&
+                return new Vector3(boxpos.x+box.width-circlepos.x+circle.hradius,0.0,0.0);
+            } else if (circlepos.x+circle.hradius > boxpos.x &&
                     circlepos.x < boxpos.x+box.width/2.0) {
-                return new Vector3(boxpos.x-circlepos.x-circle.radius,0.0,0.0);
+                return new Vector3(boxpos.x-circlepos.x-circle.hradius,0.0,0.0);
             }
         }
         /*
@@ -121,9 +131,10 @@ class CollisionDetector {
 
     Vector3 collideCircleAndCircle(Vector3 circle1pos, Circle circle1,
                                    Vector3 circle2pos, Circle circle2) {
+
         Vector3 dist = circle1pos-circle2pos;
-        if (dist < circle1.radius+circle2.radius) {
-            return dist.normalized()*(circle1.radius+circle2.radius-dist.length);
+        if (dist.length < circle1.hradius+circle2.hradius) {
+            return dist.normalized()*(circle1.hradius+circle2.hradius-dist.length);
         }
         return null;
     }

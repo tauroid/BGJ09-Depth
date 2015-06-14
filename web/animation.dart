@@ -1,4 +1,6 @@
-class Animation {
+import 'dart:html';
+
+class Anim {
     ImageElement spritesheet;    
     int rows, columns, width, height;
     int starttime = new DateTime.now().millisecondsSinceEpoch;
@@ -11,21 +13,21 @@ class Animation {
     int totaltime;
 
     bool playing = true;
-    int pausetime;
+    int pausetime = 0;
     int start, end;
     bool repeat = true;
     bool flipped = false;
 
     int scaling = 4;
 
-    Animation(ImageElement spritesheet, int width, int height, [int maxframes])
+    Anim(ImageElement spritesheet, int width, int height, [int maxframes])
             : this.spritesheet = spritesheet,
               this.width = width,
               this.height = height,
               this.start = 0 { 
 
-        rows = spritesheet.height/height;
-        columns = spritesheet.width/width;
+        rows = (spritesheet.height/height).toInt();
+        columns = (spritesheet.width/width).toInt();
         if (maxframes == null) this.maxframes = rows*columns;
         this.end = this.maxframes-1;
     }
@@ -75,7 +77,8 @@ class Animation {
             } else {
                 int frametime = 0;
                 time = time % totaltime;
-                for (int i = 0; i < _framedelaysms.length; ++i) {
+                int i;
+                for (i = 0; i < _framedelaysms.length; ++i) {
                     frametime += _framedelaysms[i];
                     if (frametime > time) break;
                 }

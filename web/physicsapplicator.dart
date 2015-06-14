@@ -1,7 +1,9 @@
 import 'package:vector_math/vector_math.dart';
 
 import 'events.dart';
+import 'collision.dart';
 import 'level.dart';
+import 'mob.dart';
 
 class PhysicsApplicator extends Subscriber {
     Level _level;
@@ -24,14 +26,18 @@ class PhysicsApplicator extends Subscriber {
     }
 
     void handleCollision(Collision collision) {
-        collision.collider.position = collision.collider.position
-            + collision.distanceAlongNormal;
-        collision.collider.velocity -= collision.distanceAlongNormal.normalized()*
-            collision.collider.velocity.dot(collision.distanceAlongNormal.normalized());
+        if (collision.scenecollidee != null) {
+            collision.collider.position = collision.collider.position
+                + collision.distanceAlongNormal;
+            collision.collider.velocity -= collision.distanceAlongNormal.normalized()*
+                collision.collider.velocity.dot(collision.distanceAlongNormal.normalized());
+        }
     }
 
     void update(num delta) {
         _level.mobs.forEach((Mob mob) {
+            if (!mob.active) return;
+
             mob.position += mob.velocity*delta/1000.0;
             if (!mob.flying) mob.velocity += gravity*delta/1000.0;
         });

@@ -22,7 +22,6 @@ class EventBus {
 
             for (String filter in subscriber.filters) {
                 if (filter == event.type || filter == "all") {
-                    print(event.type);
                     subscriber.onEvent(event);
                     break;
                 }
