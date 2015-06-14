@@ -1,0 +1,4 @@
+name: huemanatee
+dependencies:
+  vector_math: any
+  benchmark_harness: any
