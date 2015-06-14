@@ -4,6 +4,7 @@ import 'package:vector_math/vector_math.dart';
 
 import 'animation.dart';
 import 'collisionshapes.dart';
+import 'logic.dart';
 
 class Scenery {
     static const int MAX_ITEMS = 20;
@@ -14,6 +15,9 @@ class Scenery {
     Vector3 position = new Vector3.zero();
     double rotation = 0;
     Vector3 anchorPoint = new Vector3.zero();
+    double slowdowntime = 200.0;
+    bool kills = false;
+
     List<bool> used = new List.filled(MAX_ITEMS,false);
     List<bool> hidden = new List.filled(MAX_ITEMS,false);
     List<ImageElement> images = new List(MAX_ITEMS);
@@ -21,6 +25,7 @@ class Scenery {
     List<CustomDrawable> customDrawables = new List(MAX_ITEMS);
     List<Vector3> positions = new List(MAX_ITEMS);
     List<double> rotations = new List(MAX_ITEMS);
+    List<double> zooms = new List(MAX_ITEMS);
     List<Vector2> anchors = new List(MAX_ITEMS);
 
     List<CollisionShape> collisionShapes = new List(MAX_ITEMS);
@@ -31,4 +36,8 @@ class Scenery {
         }
         return -1;
     }
+}
+
+class ActiveScenery extends Scenery with Logic {
+    void update(num delta);
 }

@@ -6,7 +6,7 @@ class Animation {
     int lastframe = 0;
 
     bool timeperframe = false;
-    int framedelayms = 30;
+    int framedelayms = 100;
     List<int> _framedelaysms;
     int totaltime;
 
@@ -14,8 +14,9 @@ class Animation {
     int pausetime;
     int start, end;
     bool repeat = true;
+    bool flipped = false;
 
-    int scaling = 3;
+    int scaling = 4;
 
     Animation(ImageElement spritesheet, int width, int height, [int maxframes])
             : this.spritesheet = spritesheet,
@@ -23,7 +24,6 @@ class Animation {
               this.height = height,
               this.start = 0 { 
 
-        print(spritesheet.height);
         rows = spritesheet.height/height;
         columns = spritesheet.width/width;
         if (maxframes == null) this.maxframes = rows*columns;
@@ -66,7 +66,6 @@ class Animation {
                 playing = false;
                 lastframe = maxframes-1;
             } else {
-                print(maxframes);
                 lastframe = (time/framedelayms).floor() % maxframes;
             }
         } else {

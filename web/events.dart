@@ -3,6 +3,8 @@ import 'dart:collection';
 class GameEvent {
     String type;
     dynamic data;
+
+    GameEvent(this.type,this.data);
 }
 
 abstract class Subscriber {
@@ -12,14 +14,15 @@ abstract class Subscriber {
 }
 
 class EventBus {
-    List<Subscriber> subscribers;
+    static List<Subscriber> subscribers = new List();
 
-    void broadcastEvent(GameEvent event) {
+    static void broadcastEvent(GameEvent event) {
         subscribers.forEach((Subscriber subscriber) {
             if (!subscriber.subscriber_active) return;
 
             for (String filter in subscriber.filters) {
                 if (filter == event.type || filter == "all") {
+                    print(event.type);
                     subscriber.onEvent(event);
                     break;
                 }
@@ -27,7 +30,7 @@ class EventBus {
         });
     }
 
-    void subscribe(Subscriber subscriber) {
+    static void subscribe(Subscriber subscriber) {
         subscribers.add(subscriber);
     }
 }
